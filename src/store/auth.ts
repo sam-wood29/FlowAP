@@ -30,10 +30,18 @@ supabase.auth.getSession().then(({ data }) => {
   });
 });
 
-supabase.auth.onAuthStateChange((_event, session) => {
+supabase.auth.onAuthStateChange((event, session) => {
   useAuth.setState({
     status: session ? 'authed' : 'anon',
     session,
     user: session?.user ?? null,
   });
+
+  if (event === 'SIGNED_IN' && session?.user) {
+    void supabase.from('logins').insert({
+      user_id: session.user.id,
+      provider: session.user.app_metadata?.provider ?? 'unknown',
+      user_agent: navigator.userAgent,
+    });
+  }
 });
